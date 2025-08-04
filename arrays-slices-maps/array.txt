@@ -1,0 +1,4 @@
+to access the last element in golang 
+
+you take array/slice it self
+inside the array/slice you the square bracket notaion with the length method on the same array to fecth all the existing elements in the array and pick the last element using -1
