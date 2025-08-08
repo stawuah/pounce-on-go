@@ -12,10 +12,13 @@ type Item struct {
 }
 
 type Store struct {
-	items map[string]Item
 	mu    sync.Mutex
+	items map[string]Item
 }
 
+// The NewStore() function returns a pointer to a Store struct (*Store). Inside the function, &Store{...} creates a new Store instance,
+// initializes its items field with an empty map,
+// and then returns the memory address (a pointer) to that new instance.
 func NewStore() *Store {
 	return &Store{
 		items: make(map[string]Item),

@@ -1,0 +1,335 @@
+Code along: Create basics.go with:
+Variable declarations (var, :=, const)
+Basic types: int, float64, string, bool
+Print statements with different formatting
+
+
+// learnt about  type casting based on an error message which was " a type mistmatch on integers "
+
+// learnt that the length(len) method in go works on the elements not the index
+
+
+Input: nums = [2,7,11,15], target = 9
+Output: [0,1]
+Explanation: Because nums[0] + nums[1] == 2 + 7 == 9, we return [0, 1].
+
+
+true = 1
+false = 0
+
+pointer rules are 
+
+* = derefrencing to find a valued stored in a memory space(located memory holding a value)
+* = for making modification on a derefrenced value 
+*int , *string , *string[] etc 
+
+// The function `updateEngineNumber` now accepts a parameter that is a pointer to an integer.
+// This is the `*int` type, which you named `egine_number`.
+// The parameter `p` is a pointer.
+func updateEngineNumber(p *int) {
+    // To modify the value at the memory address that `p` points to,
+    // we must first dereference the pointer using the '*' operator.
+    // The `*p` expression gives us the actual integer value that `p` points to.
+    
+    // We can then re-assign a new value to the dereferenced pointer.
+    // For example, to increment the value by 1:
+    *p = *p + 1
+
+    // You can also use the shorthand assignment operator if you prefer:
+    // *p++ is invalid syntax in Go.
+    // *p += 1 
+}
+
+and then in use  
+
+func main() {
+    x := 10
+    updateEngineNumber(&x)
+
+    reason is that, 
+
+The General Principle
+You are absolutely right. When you have a pointer type (like *int, *[]int, *[]string), the process to modify the original value(s) is a three-step dance:
+
+Get the address: Use the address-of operator (&) to get the memory address of the variable you want to modify. You pass this address to the function.
+
+Access the value: Inside the function, use the dereference operator (*) on the pointer to access the value stored at that memory address.
+
+Modify the value: You then use the * operator again to assign a new value to the dereferenced pointer, which directly modifies the original variable.
+
+
+}
+
+
+& = refrencing memory locations of a value
+& = You use & in a return statement to hand off a pointer to a newly created variable.
+
+
+LERANING POINTERS ON STRUCTS 
+
+n the context of a method, *CloudResource in the method signature is called a pointer receiver. It means that the method is attached to a pointer to a CloudResource struct, not a copy of the struct itself.
+
+What it Really Means
+When a method has a *CloudResource receiver, it means two things:
+
+The method can modify the original struct's fields.
+
+This is the most important reason to use a pointer receiver.
+
+When you call a method with a pointer receiver, you are passing the memory address of the struct.
+
+This allows the method to directly access and change the values of the struct's fields, and these changes will be visible to the caller after the method returns.
+
+It's more efficient for large structs.
+
+Instead of making a complete copy of the entire struct (which could be very large), the method only gets a pointer to the struct.
+
+A pointer is a small, fixed-size value (e.g., 8 bytes on a 64-bit system), so it's much faster to pass around than a large struct.
+
+Contrast with a Value Receiver
+The alternative is a value receiver, where the method is attached to CloudResource (without the asterisk).
+
+When a method has a value receiver, Go creates a copy of the struct instance before calling the method.
+
+Any modifications made to the struct's fields inside the method are made to this copy, not the original struct.
+
+When the method finishes, the copy is discarded, and the original struct remains unchanged.
+
+Code Example
+Let's use a simple CloudResource struct to illustrate the difference.
+
+Go
+
+package main
+
+import "fmt"
+
+// CloudResource is a simple struct
+type CloudResource struct {
+    Name   string
+    Status string
+}
+
+// UpdateStatus is a method with a POINTER RECEIVER.
+// The receiver is `*CloudResource`, so it can modify the original struct.
+func (cr *CloudResource) UpdateStatus(newStatus string) {
+    // The `*` is implicit. Go automatically dereferences the pointer for you
+    // to access the fields. The call is equivalent to (*cr).Status = newStatus.
+    fmt.Printf("Updating status of '%s' from '%s' to '%s'\n", cr.Name, cr.Status, newStatus)
+    cr.Status = newStatus
+}
+
+// GetStatus is a method with a VALUE RECEIVER.
+// It receives a copy of the struct and cannot modify the original.
+func (cr CloudResource) GetStatus() string {
+    // This is fine, as we are only reading the value.
+    return cr.Status
+}
+
+// ChangeName is a method with a VALUE RECEIVER.
+// Any changes made here are to a copy and will not affect the original.
+func (cr CloudResource) ChangeName(newName string) {
+    fmt.Printf("Attempting to change name of '%s' to '%s' using a value receiver...\n", cr.Name, newName)
+    cr.Name = newName // This changes the COPY, not the original.
+}
+
+
+func main() {
+    // Create an instance of the struct
+    myResource := CloudResource{Name: "my-vm", Status: "Provisioning"}
+
+    // Get the status using a value receiver method
+    fmt.Println("Initial status:", myResource.GetStatus())
+
+    // Call the method with a POINTER RECEIVER
+    // This will modify the original 'myResource' struct
+    myResource.UpdateStatus("Running")
+
+    // The change is now visible in the original struct
+    fmt.Println("New status after update:", myResource.GetStatus())
+
+    // Now, call a method with a VALUE RECEIVER that attempts to modify a field
+    myResource.ChangeName("new-vm-name")
+
+    // The name of the original struct remains unchanged
+    fmt.Println("Name after failed change:", myResource.Name)
+}
+
+So note, when you are using pointer receiver on methods go automatically dereferences the pointer for you (*cr).Status = status
+Summary
+Receiver Type	Syntax	When to Use
+Pointer Receiver	func (cr *CloudResource)	- When the method needs to modify the struct's fields.<br>- When the struct is large (for efficiency).
+Value Receiver	func (cr CloudResource)	- When the method only needs to read the struct's data.<br>- When the struct is small and you want to ensure the original is not changed.
+
+
+HARDEST = You are 100% correct that the ampersand & is used to get the memory address of a variable.
+
+The reason you don't have to write it yourself when calling a method with a pointer receiver is that the Go compiler automatically handles it for you.
+
+Let's break down what's happening behind the scenes.
+
+The "Syntactic Sugar" in Action
+When you write this:
+
+Go
+
+myResource := CloudResource{...}
+myResource.UpdateStatus("Running") // The UpdateStatus method has a *CloudResource receiver
+You are calling a method with a pointer receiver (func (cr *CloudResource)) on a value of type CloudResource.
+
+The Go compiler is smart enough to see this mismatch and says, "Ah, this method needs a pointer, but I have a value. I'll just get the address of the value and pass that instead."
+
+The compiler effectively translates your code to this:
+
+Go
+
+myResource := CloudResource{...}
+(&myResource).UpdateStatus("Running") // The compiler automatically adds the '&'
+This is why your method call works seamlessly. You don't have to manually write the ampersand, even though a memory address is what's being passed.
+
+
+
+
+The Reverse is Also True
+Go's compiler also handles the reverse situation. If you have a method with a value receiver (func (cr CloudResource)) and you call it on a pointer, the compiler will automatically dereference the pointer for you.
+
+Go
+
+// GetStatus is a method with a VALUE RECEIVER (CloudResource)
+// func (cr CloudResource) GetStatus() string { ... }
+
+myResourcePtr := &CloudResource{...}
+status := myResourcePtr.GetStatus() // This call works perfectly
+The compiler sees that GetStatus needs a value but is being called on a pointer. It automatically dereferences myResourcePtr to get the value, then makes a copy of that value and passes it to the method. It's as if you had written (*myResourcePtr).GetStatus().
+
+HARDEST /=
+
+now on function methods (pointer receiver) that returns a pointer to a structs
+you can the dot (.) notation to dereference the pointer automatically for us 
+
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+// Resource is a simple struct
+type Resource struct {
+	Name   string
+	Status string
+}
+
+// CreateResource simulates a function that returns a pointer to a new Resource.
+// It uses the standard (error, *Resource) signature.
+func CreateResource(name string) (error, *Resource) {
+	if name == "" {
+		// Return an error if the name is invalid.
+		return errors.New("resource name cannot be empty"), nil
+	}
+
+	// On success, return a nil error and the address of a new Resource.
+	// We create the struct instance and then get its address.
+	return nil, &Resource new instance of the struct and use memory so that the (.) dot notation will dereference it to pull the valid value passed in the memory instance{
+		Name:   name,
+		Status: "Provisioning",
+	}
+}
+
+func main() {
+	// Let's create a valid resource
+	err, myResource := CreateResource("database-01")
+	if err != nil {
+		// Handle the error first! If err is not nil, myResource is nil.
+		fmt.Println("Error creating resource:", err)
+		return
+	}
+
+	// Since err is nil, we know myResource is a valid pointer.
+	// We can now work with it. The dot operator automatically
+	// dereferences the pointer for us.
+	fmt.Printf("Successfully created resource '%s' with status '%s'\n", myResource.Name, myResource.Status)
+}
+
+Your understanding is mostly correct, but let's clarify a few key points about the flow in Go.
+
+Correcting the Flow
+Function Signature: The function signature func CreateResource(name string) (error, *Resource) states that the function will return an error and a pointer to a Resource struct (*Resource). It doesn't take a value and then create an address for it; it's designed from the start to return a pointer.
+
+&Resource{...}: The expression &Resource{...} is a shorthand. It performs two actions:
+
+It creates a new instance of the Resource struct in memory, initializing its fields with the provided values (Name: name, Status: "Provisioning").
+
+It then immediately returns the memory address of that newly created struct. The & operator is what gives you the pointer.
+
+Dereferencing with the Dot Notation: When you receive this pointer in main (e.g., myResource), you are indeed holding a memory address. Go's dot notation (.) is a special feature that automatically dereferences this pointer for you. When you write myResource.Name, Go knows you want to access the Name field of the struct located at the address stored in myResource. It saves you from having to manually write (*myResource).Name.
+
+Summary of the Process
+The CreateResource function is called.
+Inside the function, a new Resource struct is created in memory.
+The & operator gets the memory address of this new struct.
+This memory address (the pointer) is returned to the main function.
+In main, the variable myResource now holds the pointer (the memory address).
+When you use myResource.Name, the Go compiler automatically dereferences the pointer to access the underlying struct's Name field.
+So, the key takeaway is that the &Resource{...} expression is what creates the struct and hands you its memory address. The dot notation then handles the dereferencing for you transparently.
+
+
+NB: pointers used on function methods are different when used on actual functions and all both has it patterns
+
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
+// Resource struct
+type Resource struct {
+	Name   string
+	Status string
+}
+
+// Function to create a resource
+func CreateResource(name string) (error, *Resource) {
+	if name == "" {
+		return errors.New("resource name cannot be empty"), nil
+	}
+	return nil, &Resource{
+		Name:   name,
+		Status: "Provisioning",
+	}
+}
+
+// Function to update a resource
+func UpdateResource(r *Resource, newStatus string) error {
+	if r == nil {
+		return errors.New("cannot update a nil resource")
+	}
+	r.Status = newStatus
+	return nil
+}
+
+func main() {
+	// --- Step 1: Create a resource and handle the returned pointer ---
+	fmt.Println("--- Creating a resource ---")
+	err, myResource := CreateResource("database-01")
+	if err != nil {
+		fmt.Println("Error creating resource:", err)
+		return
+	}
+	fmt.Printf("Initial state: %+v\n", myResource)
+
+	// --- Step 2: Pass the resource's address to a function for modification ---
+	fmt.Println("\n--- Updating the resource's status ---")
+	// We pass the address of our variable `myResource` using `&`
+	updateErr := UpdateResource(myResource, "Active")
+	if updateErr != nil {
+		fmt.Println("Error updating resource:", updateErr)
+		return
+	}
+
+	// --- Step 3: Verify the changes are reflected in the original variable ---
+	fmt.Println("\n--- Verifying the final state ---")
+	fmt.Printf("Final state: %+v\n", myResource)
+}
+
